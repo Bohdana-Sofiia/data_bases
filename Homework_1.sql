@@ -1,4 +1,4 @@
-DROP DATABASE IF EXISTS Homework_1;
+DROP DATABASE IF EXISTS homework_1;
 CREATE DATABASE homework_1;
 USE homework_1;
  
@@ -67,54 +67,51 @@ INSERT INTO Equipment (equip_id, equip_name, emp_id, purchase_date) VALUES
 (7, 'Headset', 7, '2022-01-01');
 
 INSERT INTO Salaries (emp_id, salary, bonus) VALUES
-(1, 60000, 5000),
-(2, 55000, 3000),
-(3, 62000, 4000),
-(4, 58000, 3500),
-(5, 50000, 2000),
+(1, 600, 5000),
+(2, 5000, 300),
+(3, 6000, 4000),
+(4, 500, 3500),
+(5, 50000, 200),
 (6, 53000, 2500),
 (7, 57000, 3000);
 
 
-WITH DeptBudget AS (
-    SELECT d.dept_id, d.dept_name, SUM(p.budget) AS total_budget
-    FROM Departments d
-    JOIN Projects p ON d.dept_id = p.dept_id
-    GROUP BY d.dept_id, d.dept_name
-    HAVING SUM(p.budget) > 10000   
+WITH SalaryFull AS (
+    SELECT 
+        e.emp_id, 
+        e.name, 
+        (s.salary + s.bonus) AS total_salary
+    FROM employees e
+    JOIN salaries s ON e.emp_id = s.emp_id
 )
 
-SELECT e.name AS empolee_name,
+SELECT e.name AS employee_name,
        d.dept_name,
        p.proj_name,
        eq.equip_name,
-       s.salary,
-       db.total_budget,
+       s.total_salary,
        'Rich' AS category
 FROM Employees e
-JOIN Salaries s ON e.emp_id = s.emp_id
+JOIN SalaryFull s ON e.emp_id = s.emp_id
 JOIN Departments d ON e.dept_id = d.dept_id
 JOIN Projects p ON d.dept_id = p.dept_id
 JOIN Equipment eq ON e.emp_id = eq.emp_id
-JOIN DeptBudget db ON d.dept_id = db.dept_id
-WHERE s.salary > (SELECT AVG(salary) FROM Salaries) 
+WHERE s.total_salary > (SELECT AVG(salary + bonus) FROM Salaries)
 
 UNION
 
-SELECT e.name AS empolee_name,
+SELECT e.name AS employee_name,
        d.dept_name,
        p.proj_name,
        eq.equip_name,
-       s.salary,
-       db.total_budget,
+       s.total_salary,
        'Poor' AS category
 FROM Employees e
-JOIN Salaries s ON e.emp_id = s.emp_id
+JOIN SalaryFull s ON e.emp_id = s.emp_id
 JOIN Departments d ON e.dept_id = d.dept_id
 JOIN Projects p ON d.dept_id = p.dept_id
 JOIN Equipment eq ON e.emp_id = eq.emp_id
-JOIN DeptBudget db ON d.dept_id = db.dept_id
-WHERE s.salary < (SELECT AVG(salary) FROM Salaries)
+WHERE s.total_salary < (SELECT AVG(salary + bonus) FROM Salaries)
 
-ORDER BY salary DESC
+ORDER BY total_salary DESC
 LIMIT 5;
