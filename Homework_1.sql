@@ -41,14 +41,20 @@ INSERT INTO Employees (emp_id, name, dept_id, hire_date) VALUES
 (4, 'David', 3, '2018-11-05'),
 (5, 'Eva', 2, '2022-05-30'),
 (6, 'Frank', 4, '2020-09-12'),
-(7, 'Grace', 5, '2021-12-01');
+(7, 'Charlie', 4, '2021-07-10'),
+(8, 'David', 8, '2018-11-05'),
+(9, 'Eva', 2, '2022-05-30'),
+(10, 'Grace', 5, '2021-12-01');
 
 INSERT INTO Departments (dept_id, dept_name) VALUES
 (1, 'IT'),
 (2, 'HR'),
 (3, 'Finance'),
 (4, 'Marketing'),
-(5, 'Sales');
+(5, 'HR'),
+(6, 'Finance'),
+(7, 'Marketing'),
+(8, 'Sales');
 
 INSERT INTO Projects (proj_id, proj_name, dept_id, budget) VALUES
 (1, 'Website Upgrade', 1, 50000),
@@ -75,43 +81,47 @@ INSERT INTO Salaries (emp_id, salary, bonus) VALUES
 (6, 53000, 2500),
 (7, 57000, 3000);
 
-
 WITH SalaryFull AS (
     SELECT 
         e.emp_id, 
         e.name, 
-        (s.salary + s.bonus) AS total_salary
-    FROM employees e
-    JOIN salaries s ON e.emp_id = s.emp_id
+        e.dept_id,
+        (s.salary + s.bonus) AS emp_total_salary
+    FROM Employees e
+    JOIN Salaries s ON e.emp_id = s.emp_id
 )
 
-SELECT e.name AS employee_name,
-       d.dept_name,
-       p.proj_name,
-       eq.equip_name,
-       s.total_salary,
-       'Rich' AS category
+SELECT 
+    d.dept_name,
+    p.proj_name,
+    COUNT(e.emp_id) AS num_employees,
+    SUM(s.emp_total_salary) AS dep_total_salary,
+    AVG(s.emp_total_salary) AS emp_avg_salary,
+    'Rich' AS category
 FROM Employees e
 JOIN SalaryFull s ON e.emp_id = s.emp_id
 JOIN Departments d ON e.dept_id = d.dept_id
 JOIN Projects p ON d.dept_id = p.dept_id
 JOIN Equipment eq ON e.emp_id = eq.emp_id
-WHERE s.total_salary > (SELECT AVG(salary + bonus) FROM Salaries)
+GROUP BY d.dept_name, p.proj_name
+HAVING emp_avg_salary > (SELECT AVG(salary + bonus) FROM Salaries)
 
 UNION
 
-SELECT e.name AS employee_name,
-       d.dept_name,
-       p.proj_name,
-       eq.equip_name,
-       s.total_salary,
-       'Poor' AS category
+SELECT 
+    d.dept_name,
+    p.proj_name,
+    COUNT(e.emp_id) AS num_employees,
+    SUM(s.emp_total_salary) AS dep_total_salary,
+    AVG(s.emp_total_salary) AS emp_avg_salary,
+    'Poor' AS category
 FROM Employees e
 JOIN SalaryFull s ON e.emp_id = s.emp_id
 JOIN Departments d ON e.dept_id = d.dept_id
 JOIN Projects p ON d.dept_id = p.dept_id
 JOIN Equipment eq ON e.emp_id = eq.emp_id
-WHERE s.total_salary < (SELECT AVG(salary + bonus) FROM Salaries)
+GROUP BY d.dept_name, p.proj_name
+HAVING emp_avg_salary < (SELECT AVG(salary + bonus) FROM Salaries)
 
-ORDER BY total_salary DESC
-LIMIT 5;
+ORDER BY category DESC
+LIMIT 3;
