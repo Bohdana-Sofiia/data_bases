@@ -1,0 +1,38 @@
+Tables: `orders`, `customers`, `products`
+Rows: = 1,000,000 each
+
+Non-Optimized Query:
+
+Execution time: ~18 seconds
+Issues: Full table scans; aggregation over all rows; no indexes used
+
+---
+
+Optimizing:
+1 Indexes:
+  ON orders(order_date) — helps filter rows efficiently by order_date.
+  ON customers(country) — supports grouping by country.
+  ON products(price) — supports filtering price > 0 and joining by product_id.
+
+2 Query Rewriting and CTE:
+
+  Pre-filter "orders" before JOIN using a CTE to reduce rows before joining
+  Rewritten "JOIN" syntax improves readability and optimizer efficiency
+
+3 Optimizer Hints
+
+  USE INDEX:
+   Forces MySQL to use the specified index
+   Positive influence: avoids full table scans and speeds up joins/filters
+   Negative: if the index is not selective, it may reduce performance
+
+  /*+ INLINE */
+   Suggests the CTE should be inlined(does not create a temporary table) rather than materialized(create a temporary table)
+   Positive: reduces temporary table usage and speeds up joins
+   Negative: can increase memory usage on very complex queries
+
+  /*+ STRAIGHT_JOIN */
+   Forces join order to match the written SQL
+   Positive: reduces intermediate rows if the first table is smaller
+   Negative: may prevent the optimizer from choosing a better join order if table sizes change
+
